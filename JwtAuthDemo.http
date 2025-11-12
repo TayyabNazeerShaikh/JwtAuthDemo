@@ -1,0 +1,26 @@
+﻿@JwtAuthDemo_HostAddress = https://localhost:7042
+
+### 1️⃣ Login to get JWT token
+POST {{JwtAuthDemo_HostAddress}}/login
+Content-Type: application/json
+
+{
+  "username": "tayyab",
+  "password": "1234"
+}
+
+> {% client.global.set("token", response.body.token); %}
+
+### 2️⃣ Public endpoint (no auth)
+GET {{JwtAuthDemo_HostAddress}}/public
+Accept: application/json
+
+### 3️⃣ Protected endpoint (requires Bearer token)
+GET {{JwtAuthDemo_HostAddress}}/protected
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 4️⃣ Admin-only endpoint (requires Admin role)
+GET {{JwtAuthDemo_HostAddress}}/admin
+Authorization: Bearer {{token}}
+Accept: application/json
