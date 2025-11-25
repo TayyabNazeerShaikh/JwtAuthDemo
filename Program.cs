@@ -1,12 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using JwtAuthDemo.Models;
 using JwtAuthDemo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddSingleton<UserService>();
 
 
 builder.Services.AddAuthentication(options =>
@@ -41,11 +43,25 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/login", (LoginRequest request, JwtService jwt) =>
+app.MapPost("/register", (User user, UserService userService) =>
 {
-    if (request.Username == "tayyab" && request.Password == "1234")
+    if (userService.GetUser(user.Username) != null)
     {
-        var token = jwt.GenerateToken(request.Username, "Admin");
+        return Results.Conflict("User already exists");
+    }
+
+    userService.AddUser(user);
+    return Results.Ok();
+})
+.WithName("Register")
+.WithTags("Auth");
+
+app.MapPost("/login", (LoginRequest request, UserService userService, JwtService jwt) =>
+{
+    if (userService.VerifyPassword(request.Username, request.Password))
+    {
+        var user = userService.GetUser(request.Username)!;
+        var token = jwt.GenerateToken(user.Username, user.Role);
         return Results.Ok(new { Token = token });
     }
 
